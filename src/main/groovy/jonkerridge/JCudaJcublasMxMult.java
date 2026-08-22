@@ -1,0 +1,65 @@
+import jcuda.*;
+import jcuda.jcublas.JCublas;
+
+public class JCudaMatrixMultiplyExample {
+    public static void main(String[] args) {
+        // Matrix dimensions (N x N)
+        int n = 2;
+        int size = n * n;
+
+        // Host (CPU) matrices stored in column-major order required by CUBLAS
+        // A = [ 1.0  3.0 ]
+        //     [ 2.0  4.0 ]
+        float[] h_A = { 1.0f, 2.0f, 3.0f, 4.0f };
+        
+        // B = [ 5.0  7.0 ]
+        //     [ 6.0  8.0 ]
+        float[] h_B = { 5.0f, 6.0f, 7.0f, 8.0f };
+        
+        // Result matrix C initialized to zero
+        float[] h_C = new float[size];
+
+        // Initialize JCublas
+        JCublas.cublasInit();
+
+        // Allocate device (GPU) memory pointers
+        Pointer d_A = new Pointer();
+        Pointer d_B = new Pointer();
+        Pointer d_C = new Pointer();
+
+        JCublas.cublasAlloc(size, Sizeof.FLOAT, d_A);
+        JCublas.cublasAlloc(size, Sizeof.FLOAT, d_B);
+        JCublas.cublasAlloc(size, Sizeof.FLOAT, d_C);
+
+        // Copy host data to device
+        JCublas.cublasSetVector(size, Sizeof.FLOAT, Pointer.to(h_A), 1, d_A, 1);
+        JCublas.cublasSetVector(size, Sizeof.FLOAT, Pointer.to(h_B), 1, d_B, 1);
+        JCublas.cublasSetVector(size, Sizeof.FLOAT, Pointer.to(h_C), 1, d_C, 1);
+
+        // Perform Single-Precision Matrix Multiplication: C = alpha * A * B + beta * C
+        float alpha = 1.0f;
+        float beta = 0.0f;
+        JCublas.cublasSgemm('n', 'n', n, n, n, alpha, d_A, n, d_B, n, beta, d_C, n);
+
+        // Copy result back to host
+        JCublas.cublasGetVector(size, Sizeof.FLOAT, d_C, 1, Pointer.to(h_C), 1);
+
+        // Print result matrix C
+        System.out.println("Result Matrix C:");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                // Indexing for column-major format
+                System.out.print(h_C[j * n + i] + " ");
+            }
+            System.out.println();
+        }
+
+        // Clean up device memory
+        JCublas.cublasFree(d_A);
+        JCublas.cublasFree(d_B);
+        JCublas.cublasFree(d_C);
+
+        // Shut down JCublas
+        JCublas.cublasShutdown();
+    }
+}

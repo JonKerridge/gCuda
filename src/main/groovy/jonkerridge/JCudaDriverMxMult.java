@@ -1,0 +1,84 @@
+import static jcuda.driver.JCudaDriver.*;
+import jcuda.*;
+import jcuda.driver.*;
+import java.io.IOException;
+
+public class JCudaDriverMatrixMul {
+    public static void main(String[] args) throws IOException {
+        setExceptionsEnabled(true);
+        cuInit(0);
+        
+        CUdevice device = new CUdevice();
+        cuDeviceGet(device, 0);
+        CUcontext context = new CUcontext();
+        cuCtxCreate(context, 0, device);
+
+        // Load the PTX file containing the matrixMultiply kernel
+        CUmodule module = new CUmodule();
+        cuModuleLoad(module, "matrixMultiply.ptx");
+        CUfunction function = new CUfunction();
+        cuModuleGetFunction(function, module, "matrixMultiply");
+
+        int N = 2; // Matrix size N x N
+        int size = N * N * Sizeof.FLOAT;
+
+        float[] hostA = {1.0f, 2.0f, 3.0f, 4.0f};
+        float[] hostB = {5.0f, 6.0f, 7.0f, 8.0f};
+        float[] hostC = new float[4];
+
+        CUdeviceptr devA = new CUdeviceptr();
+        CUdeviceptr devB = new CUdeviceptr();
+        CUdeviceptr devC = new CUdeviceptr();
+        cuMemAlloc(devA, size);
+        cuMemAlloc(devB, size);
+        cuMemAlloc(devC, size);
+
+        cuMemcpyHtoD(devA, Pointer.to(hostA), size);
+        cuMemcpyHtoD(devB, Pointer.to(hostB), size);
+
+        Pointer kernelParameters = Pointer.to(
+            Pointer.to(devA),
+            Pointer.to(devB),
+            Pointer.to(devC),
+            Pointer.to(new int[]{N})
+        );
+
+        int blockSizeX = 16;
+        int blockSizeY = 16;
+        int gridSizeX = (N + blockSizeX - 1) / blockSizeX;
+        int gridSizeY = (N + blockSizeY - 1) / blockSizeY;
+
+        cuLaunchKernel(function,
+            gridSizeX, gridSizeY, 1,      // Grid dimension
+            blockSizeX, blockSizeY, 1,    // Block dimension
+            0, null,                      // Shared memory and stream
+            kernelParameters, null        // Parameters
+        );
+
+        cuCtxSynchronize();
+        cuMemcpyDtoH(Pointer.to(hostC), devC, size);
+
+        System.out.println("Result C: " + java.util.Arrays.toString(hostC));
+
+        cuMemFree(devA);
+        cuMemFree(devB);
+        cuMemFree(devC);
+        cuCtxDestroy(context);
+    }
+}
+
+
+extern "C" __global__ void matrixMultiply(float *A, float *B, float *C, int N) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < N && col < N) {
+        float sum = 0.0f;
+        for (int i = 0; i < N; ++i) {
+            sum += A[row * N + i] * B[i * N + col];
+        }
+        C[row * N + col] = sum;
+    }
+}
+
+
