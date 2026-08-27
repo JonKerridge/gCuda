@@ -1,0 +1,15 @@
+// Source - https://stackoverflow.com/a/19281962
+// Posted by Greg Smith
+// Retrieved 2026-08-24, License - CC BY-SA 3.0
+
+CUresult CUDAAPI cuLaunchKernel(CUfunction f,
+    unsigned int gridDimX,
+    unsigned int gridDimY,
+    unsigned int gridDimZ,
+    unsigned int blockDimX,
+    unsigned int blockDimY,
+    unsigned int blockDimZ,
+    unsigned int sharedMemBytes,
+    CUstream hStream,
+    void **kernelParams,
+    void **extra);

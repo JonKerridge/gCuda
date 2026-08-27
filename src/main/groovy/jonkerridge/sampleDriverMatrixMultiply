@@ -7,7 +7,7 @@ public class JCudaDriverMatrixMul {
     public static void main(String[] args) throws IOException {
         setExceptionsEnabled(true);
         cuInit(0);
-        
+
         CUdevice device = new CUdevice();
         cuDeviceGet(device, 0);
         CUcontext context = new CUcontext();
@@ -80,5 +80,3 @@ extern "C" __global__ void matrixMultiply(float *A, float *B, float *C, int N) {
         C[row * N + col] = sum;
     }
 }
-
-

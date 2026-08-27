@@ -11,11 +11,11 @@ public class JCudaMatrixMultiplyExample {
         // A = [ 1.0  3.0 ]
         //     [ 2.0  4.0 ]
         float[] h_A = { 1.0f, 2.0f, 3.0f, 4.0f };
-        
+
         // B = [ 5.0  7.0 ]
         //     [ 6.0  8.0 ]
         float[] h_B = { 5.0f, 6.0f, 7.0f, 8.0f };
-        
+
         // Result matrix C initialized to zero
         float[] h_C = new float[size];
 

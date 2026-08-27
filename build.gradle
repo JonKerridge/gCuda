@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+//  implementation 'org.jcuda:jcuda:12.6.0'
   implementation 'org.codehaus.groovy:groovy-all:3.0.25'
   testImplementation platform('org.junit:junit-bom:5.10.0')
   testImplementation 'org.junit.jupiter:junit-jupiter'
