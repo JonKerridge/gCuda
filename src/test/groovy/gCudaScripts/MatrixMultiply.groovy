@@ -1,15 +1,17 @@
 import gCuda.Dim3
+import jcuda.driver.CUstream
 
-    //@gCudaDriverKernel
+//@gCudaDriverKernel
     Dim3 blockDim = new Dim3()
     Dim3 blockIdx = new Dim3()
     Dim3 threadIdx = new Dim3()
     int sharedMemoryBytes = 0
-    Long hStream = 0
+    CUstream hStream = null
     List extra = null
 
 //@gCudaDataIn
-    List<Float> a,b    // matrices stored linearly in ROW order
+    List<Float> a    // matrices stored linearly in ROW order
+    List<Float> b    // only one property per line
     int mSize
 
 //@gCudaDataOut
@@ -48,11 +50,13 @@ import gCuda.Dim3
     blockIdx.x = (int) ((mSize + blockDim.x - 1) / blockDim.x)
     blockIdx.y = (int) ((mSize + blockDim.y - 1) / blockDim.y)
 
-    println "sizes: blockDim =${blockDim}, blockIdx = ${blockIdx}"
+    println ("sizes: blockDim = " + blockDim + ", blockIdx = " +blockIdx)
 
 //@gCudaLaunchKernel matrixMultiply
 
 // if required emulate the whole process
+    List<Float> localC
+    localC = new Float[4]
     for (bIdy in 0 ..< blockIdx.y) {
       blockIdx.y = bIdy
       for (bIdx in 0 ..< blockIdx.x) {
@@ -61,7 +65,7 @@ import gCuda.Dim3
           threadIdx.x = tIdx
           for (tIdy in 0 ..<  blockDim.y){
             threadIdx.y = tIdy
-            matrixMultiply(a, b, c, mSize)
+            matrixMultiply(a, b, localC, mSize)
           }
         }
       }
@@ -71,7 +75,7 @@ import gCuda.Dim3
 
 // now add any final host coding
     println "finished"
+    for ( i in 0 ..< (mSize * mSize)) print "${localC[i]}, "
+    println ""
     for ( i in 0 ..< (mSize * mSize)) print "${c[i]}, "
     println ""
-
-

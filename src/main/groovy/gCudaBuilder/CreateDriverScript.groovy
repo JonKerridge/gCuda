@@ -1,8 +1,5 @@
 package gCudaBuilder
 
-
-
-
 class CreateDriverScript {
 
   /*
@@ -20,7 +17,7 @@ class CreateDriverScript {
     String gCudaScriptName, gCudaScriptPath
 //    This needs making more general but will work for now
     if (args == []) {
-      print "Please enter the name of the script to generate:"
+      print "Please enter the name of the groovyCuda script to generate:"
       gCudaScriptPath = "src/test/groovy/gCudaScripts/"
       gCudaScriptName = System.in.newReader().readLine()
     }
@@ -30,46 +27,42 @@ class CreateDriverScript {
     }
     println "creating: $gCudaScriptPath.$gCudaScriptName"
     String scriptName = gCudaScriptPath + gCudaScriptName + ".groovy"
-    List<String> pathTokens = gCudaScriptPath.tokenize('/')
-    String packageName = pathTokens[(pathTokens.size() - 1)]
     File scriptFile = new File (scriptName)
     PrintWriter sw= new PrintWriter(scriptFile)
 
-    sw.println("import gCuda.Dim3\n")
-//    sw.println ("Class $gCudaScriptName {")
-//    sw.println ("  static void main(String[] args) {\n")
-    sw.println ("//@gCudaDriverKernel\n" +
-        "    Dim3 blockDim = new Dim3()\n" +
-        "    Dim3 blockIdx = new Dim3()\n" +
-        "    Dim3 threadIdx = new Dim3()\n" +
-        "    int sharedMemoryBytes = 0\n" +
-        "    Long hStream = 0 \n" +
-        "    List extra = null \n"
+    sw.println("import gCuda.Dim3")
+    sw.println("import jcuda.Pointer")
+    sw.println("import jcuda.Sizeof")
+    sw.println("import jcuda.driver.*")
+    sw.println("import static jcuda.driver.JCudaDriver.*\n")
+
+    sw.println ("//@gcDriverKernel   path  appName\n\n" +
+        "Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase\n" +
+        "Dim3 blockSize = new Dim3()   //must be a multiple of 32\n" +
+        "int sharedMemoryBytes = 0\n" +
+        "CUstream hStream = null \n" +
+        "Pointer extra = null \n\n" +
+        "// CUDA idiomatic properties\n" +
+        "Dim3 blockIdx = new Dim3()\n" +
+        "Dim3 blockDim = new Dim3()\n" +
+        "Dim3 threadIdx = new Dim3()\n\n"
     )
 
-    sw.println("//@gCudaDataIn\n\n" +
-        "//@gCudaDataOut\n\n" +
-        "//@gCudaDataInOut\n\n" +
-        "// add the parameter variables, comma separated,\n" +
-        "//in the order they appear in the kernel definition \n" +
-        "//to the end of the following line\n"+
-        "//@gCudaKernelParams \n\n" +
-        "// insert the Cuda Kernel definition(s) as a groovy closure of the form below\n" +
-        "// where a,b, etc are parameters whose type must be specified and must match\n" +
-        "// the list of parameters specified in the //@gCudakernalparams above\n" +
-        "// def kName = { <T> a, <T> b ,  ... ->\n" +
-        "//   closure content which will be copied into the C definition\n" +
-        "// }"+
-        "//@gCudaKernel<\n\n" +
-        "//@>\n\n" +
-        "// initialise the host data\n\n" +
-        "// add the kernel code kName to end of following line\n" +
-        "//@gCudaLaunchKernel\n\n" +
-        "//@gCudaEndKernel\n\n" +
-        "// if required emulate the whole process\n\n" +
-        "// now add any final host coding\n\n"
+    sw.println(
+        "//@gcKernelDefinition\n\n" +
+        "//@gcDataToGPU\n\n" +
+        "//@gcDataFromGPU\n\n" +
+        "//@gcDataBoth\n\n" +
+        "//@gcDataInitialise\n\n" +
+        "blockSize.x = 32   // must be a multiple of 32, depends on GPU used\n"+
+        "// determine number of blocks in grid, modify following as required\n" +
+        "gridSize.x = (int)Math.ceil((double) DATASIZE / blockSize.x)\n"+
+        "//@gcKernelParams \n\n" +
+        "//@gcKernelEnd\n\n" +
+        "//@gcEmulate\n\n" +
+        "//@gcFinalise\n\n" +
+        "//@gcFinish\n\n"
     )
-
     sw.flush()
     sw.close()
   } //main

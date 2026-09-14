@@ -1,0 +1,10 @@
+Architecture and Core SpecsMicroarchitecture:
+PascalGPU Codename: GP108 (GP108-310-A1)
+CUDA Cores: 384Compute
+Capability: 6.1
+Process Node: Samsung 14nm FinFET
+
+Memory and PerformanceVRAM: 2 GB
+Memory Type: GDDR5 (noted for significantly better performance
+    than later budget DDR4 variants)
+Bus Width: 64-bit
