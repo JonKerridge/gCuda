@@ -6,7 +6,7 @@ import jcuda.Sizeof
 import jcuda.driver.*
 import static jcuda.driver.JCudaDriver.*
 
-class VectorAddEG {
+class VectorAdd {
 	static void main(String[] args) {
 
     Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
@@ -49,6 +49,8 @@ class VectorAddEG {
     }
     blockSize.x = 32   // must be a multiple of 32, depends on GPU used
     gridSize.x = (int) Math.ceil((double) vectorSize / blockSize.x)
+
+    println " blockSize = $blockSize, gridSize = $gridSize, vectorSize = $vectorSize"
     // determines number of blocks in grid
     gpuStart = System.currentTimeMillis()
 
@@ -61,7 +63,7 @@ class VectorAddEG {
 		cuCtxCreate(context, 0, device)
 		// Load the PTX file containing the kernel 
 		CUmodule module = new CUmodule() 
-		cuModuleLoad(module, 'src/test/groovy/gCudaScripts/nVectorAddEG.ptx') 
+		cuModuleLoad(module, 'src/test/groovy/gCudaScripts/nVectorAdd.ptx') 
 		CUfunction function = new CUfunction()
 		cuModuleGetFunction(function, module, 'add')
 		int[] paramToGPU0 = new int[]{vectorSize} 
