@@ -258,6 +258,7 @@ class BuildApplication {
             gFileWriter.println "\t\tcuModuleLoad(module, '${ptxFullPath}') "
             gFileWriter.println "\t\tCUfunction function = new CUfunction()"
             gFileWriter.println "\t\tcuModuleGetFunction(function, module, '${kernelMethodName}')"
+//            println "metaData = ${metaData}"
             // now allocate the memory for each of the parameters
             // and copy data as necessary
             int nParams = lineTokens.size()
@@ -287,12 +288,13 @@ class BuildApplication {
               }
             } // for line tokens
             // now set up the kernel parameters structure
-            Collection mapValues = metaData.values()
             gFileWriter.println "\t\tPointer kernelParameters = Pointer.to ("
             for ( i in 0 ..< nParams) {
               String comma = ','
               if (i == (nParams-1)) comma = ' '
-              gFileWriter.println "\t\t\tPointer.to( param${mapValues[i][1]}${mapValues[i][0]})$comma"
+              List mapValues = metaData.get(lineTokens[i].trim())
+//              println "For param ${lineTokens[i]}, MapValues are ${mapValues}"
+              gFileWriter.println "\t\t\tPointer.to( param${mapValues[1]}${mapValues[0]})$comma"
             }
             gFileWriter.println "\t\t)"
             // now call the kernel function
