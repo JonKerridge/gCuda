@@ -38,7 +38,7 @@ class CreateDriverScript {
 
     sw.println ("//@gcDriverKernel   path  appName\n\n" +
         "Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase\n" +
-        "Dim3 blockSize = new Dim3()   //must be a multiple of 32\n" +
+        "Dim3 blockSize = new Dim3()   \n" +
         "int sharedMemoryBytes = 0\n" +
         "CUstream hStream = null \n" +
         "Pointer extra = null \n\n" +
@@ -54,7 +54,7 @@ class CreateDriverScript {
         "//@gcDataFromGPU\n\n" +
         "//@gcDataBoth\n\n" +
         "//@gcDataInitialise\n\n" +
-        "blockSize.x = 32   // must be a multiple of 32, depends on GPU used\n"+
+        "blockSize.x = 32   \n"+
         "// determine number of blocks in grid, modify following as required\n" +
         "gridSize.x = (int)Math.ceil((double) DATASIZE / blockSize.x)\n"+
         "//@gcKernelParams \n\n" +
