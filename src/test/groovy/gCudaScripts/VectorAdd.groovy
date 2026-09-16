@@ -32,7 +32,7 @@ class VectorAdd {
 
 
 //@gcDataToGPU
-    int vectorSize = 1000000
+    int vectorSize = 100
     float[] vectorA = new float[vectorSize]
     float[] vectorB = new float[vectorSize]
 
@@ -110,15 +110,11 @@ class VectorAdd {
     emulateEnd = System.currentTimeMillis()
 
 //@gcFinalise
-    boolean passed = true
     for (i in 0..< vectorSize) {
-      if (Math.abs(localOutput[i] - outVector[i]) > 1e-5) {
-        println "At index $i found ${localOutput[i]} but expected ${outVector[i]}"
-        passed = false
-        break
-      }
+//      assert (Math.abs(localOutput[i] - 2*i) < 1e-5) :
+      assert (Math.abs(localOutput[i] - outVector[i]) < 1e-5) :
+        "At index $i found ${localOutput[i]} but expected ${outVector[i]}"
     }
-    println "Test ${(passed ? 'PASSED' : 'FAILED')}"
     verifyEnd = System.currentTimeMillis()
 //@gcFinish
 		cuMemFree(paramToGPU1)

@@ -1,12 +1,8 @@
-package gCudaScripts
-
 import gCuda.Dim3
 import jcuda.Pointer
 import jcuda.driver.*
 
-import javax.swing.MenuSelectionManager
-
-//@gcDriverKernel   src/test/groovy/gCudaScripts  AsymMatrixMultiply
+//@gcDriverKernel   src/test/groovy/gCudaScripts  AsymMatrixMultiply 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()   //must be a multiple of 32
@@ -36,9 +32,9 @@ def AsymMatrixMultiply = {float[] A, float[] B, float[] C, int M, int K, int N -
 } //matrixMultiply
 
 //@gcDataToGPU
-int M = 200
-int K  = 100    // AWidth = BHeight or A columns = B rows
-int N  = 150
+int M = 2   // increase by at least a factor of 10 for GPU use
+int K  = 3    // AWidth = BHeight or A columns = B rows
+int N  = 4
 float[] a = new float[M * K]  // matrices stored linearly in ROW order
 float[] b = new float[K * N]  // only one property per line
 
@@ -73,22 +69,30 @@ blockDim.x = blockSize.x
 blockDim.y = blockSize.y
 blockDim.z = blockSize.z
 
-float[] localOutput = new float[M*N]
-for (row in 0 ..< M){
-  for (col in 0 ..< N){
-    float cVal = 0.0f
-    for ( k in 0 ..< K){
-      cVal = cVal + a[row * K + k] * b[k * N + col]
+float[] lc = new float[M*N]
+for ( gy in 0 ..< gridSize.y) {
+  blockIdx.y = gy
+  for (gx in 0 ..< gridSize.x) {
+    blockIdx.x = gx
+    for (ty in 0 ..< blockSize.y){
+      threadIdx.y = ty
+      for ( tx in 0 ..< blockSize.x){
+        threadIdx.x = tx
+        AsymMatrixMultiply(a, b, lc, M, K, N)
+      }
     }
-    localOutput[row * N + col] = cVal
   }
 }
+
 emulateEnd = System.currentTimeMillis()
 //@gcFinalise
-println "finished"
+
+//c = [20, 23,26,29,56,68,80,92] // for initial testing, remove when using GPU
+
 boolean passed = true
 for ( i in 0 ..< M*N)
-  assert Math.abs(localOutput[i] - c[i]) < 1e-5 : "At index $i found ${c[i]} but expected ${localOutput[i]}"
+  assert Math.abs(lc[i] - c[i]) < 1e-5 :
+      "At index $i found ${c[i]} but expected ${lc[i]}"
 
 verifyEnd = System.currentTimeMillis()
 //@gcFinish

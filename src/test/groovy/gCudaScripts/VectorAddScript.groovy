@@ -4,7 +4,7 @@ import gCuda.Dim3
 import jcuda.Pointer
 import jcuda.driver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  VectorAdd
+//@gcDriverKernel   src/test/groovy/gCudaScripts  VectorAdd 61
 
     Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
     Dim3 blockSize = new Dim3()   //must be a multiple of 32
@@ -29,7 +29,7 @@ import jcuda.driver.*
 
 
 //@gcDataToGPU
-    int vectorSize = 1000000
+    int vectorSize = 100  // needs to be at least 10000000 to show GPU speedup
     float[] vectorA = new float[vectorSize]
     float[] vectorB = new float[vectorSize]
 
@@ -73,15 +73,11 @@ import jcuda.driver.*
     emulateEnd = System.currentTimeMillis()
 
 //@gcFinalise
-    boolean passed = true
     for (i in 0..< vectorSize) {
-      if (Math.abs(localOutput[i] - outVector[i]) > 1e-5) {
-        println "At index $i found ${localOutput[i]} but expected ${outVector[i]}"
-        passed = false
-        break
-      }
+//      assert (Math.abs(localOutput[i] - 2*i) < 1e-5) :
+      assert (Math.abs(localOutput[i] - outVector[i]) < 1e-5) :
+        "At index $i found ${localOutput[i]} but expected ${outVector[i]}"
     }
-    println "Test ${(passed ? 'PASSED' : 'FAILED')}"
     verifyEnd = System.currentTimeMillis()
 //@gcFinish
 println "Data initialise : ${gpuStart-startTime} msecs"

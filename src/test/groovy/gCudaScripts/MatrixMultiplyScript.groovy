@@ -4,7 +4,7 @@ import jcuda.driver.*
 
 import javax.swing.MenuSelectionManager
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  MatrixMultiply
+//@gcDriverKernel   src/test/groovy/gCudaScripts  MatrixMultiply 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()   //must be a multiple of 32
@@ -33,7 +33,7 @@ def matrixMultiply = {float[] A, float[] B, float[] C, int N ->
 } //matrixMultiply
 
 //@gcDataToGPU
-int mSize = 200
+int mSize = 2   // needs to be much larger to make use of a GPU
 float[] a = new float[mSize * mSize]  // matrices stored linearly in ROW order
 float[] b = new float[mSize * mSize]      // only one property per line
 
@@ -69,28 +69,29 @@ blockDim.x = blockSize.x
 blockDim.y = blockSize.y
 blockDim.z = blockSize.z
 
-float[] localOutput = new float[mSize*mSize]
-for (row in 0 ..< mSize){
-  for (col in 0 ..< mSize){
-    float cVal = 0.0f
-    for ( k in 0 ..< mSize){
-      cVal = cVal + a[row * mSize + k] * b[k * mSize + col]
+float[] lc = new float[mSize*mSize]
+for ( gy in 0 ..< gridSize.y) {
+  blockIdx.y = gy
+  for (gx in 0 ..< gridSize.x) {
+    blockIdx.x = gx
+    for (ty in 0 ..< blockSize.y){
+      threadIdx.y = ty
+      for ( tx in 0 ..< blockSize.x){
+        threadIdx.x = tx
+        matrixMultiply(a, b, lc, mSize)
+      }
     }
-    localOutput[row * mSize + col] = cVal
   }
 }
 emulateEnd = System.currentTimeMillis()
 //@gcFinalise
-println "finished"
-boolean passed = true
+
+//c = [2, 3, 6, 11]   //for local testing remove when using GPU
+
 for ( i in 0 ..< mSize* mSize){
-  if (Math.abs(localOutput[i] - c[i]) > 1e-5) {
-    println "At index $i found ${localOutput[i]} but expected ${c[i]}"
-    passed = false
-    break
-  }
+  assert Math.abs(lc[i] - c[i]) < 1e-5 :
+      "At index $i found ${lc[i]} but expected ${c[i]}"
 }
-println "Test ${(passed ? 'PASSED' : 'FAILED')}"
 
 verifyEnd = System.currentTimeMillis()
 //@gcFinish
@@ -98,5 +99,4 @@ println "Data initialise : ${gpuStart-startTime} msecs"
 println "GPU run time    : ${gpuEnd-gpuStart} msecs"
 println "Emulate time    : ${emulateEnd-gpuEnd} msecs"
 println "Verify time     : ${verifyEnd-emulateEnd} msecs"
-
 

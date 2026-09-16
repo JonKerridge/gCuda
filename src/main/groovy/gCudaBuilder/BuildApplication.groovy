@@ -37,7 +37,7 @@ class BuildApplication {
 //    println"What is the compute capability of the GPU being used\n" +
 //        "It takes the form of two digits xy where x.y is the GPU compute capability:"
 //    GPUcc = System.in.newReader().readLine()
-    GPUcc = '61'
+
     File gFile, cFile
     PrintWriter gFileWriter, cFileWriter
     Map <String, List> metaData = [:]
@@ -100,11 +100,12 @@ class BuildApplication {
           if (line.startsWith("//@gc")){
             assert line.startsWith('//@gcDriverKernel')
             lineTokens = line.tokenize()
-            assert lineTokens.size() == 3
+            assert lineTokens.size() == 4
             // token[1] contains package details
             List<String> folderLines = lineTokens[1].tokenize('/')
             String packageName = folderLines[folderLines.size() - 1]
             String className = lineTokens[2]
+            GPUcc = lineTokens[3]
 //            println "$line: package: $packageName, class: $className"
             String gFileName = "${lineTokens[1]}/${className}.groovy"
             println "Groovy file is $gFileName"

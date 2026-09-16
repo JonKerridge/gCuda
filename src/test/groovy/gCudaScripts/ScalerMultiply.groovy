@@ -10,10 +10,10 @@ class ScalerMultiply {
 	static void main(String[] args) {
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
-Dim3 blockSize = new Dim3()   
+Dim3 blockSize = new Dim3()
 int sharedMemoryBytes = 0
-CUstream hStream = null 
-Pointer extra = null 
+CUstream hStream = null
+Pointer extra = null
 
 // CUDA idiomatic properties
 Dim3 blockIdx = new Dim3()
@@ -26,13 +26,13 @@ startTime = System.currentTimeMillis()
 def scalerMultiply = {int s, int vSize, float[] vector ->
   int i = blockIdx.x * blockDim.x + threadIdx.x
   if ( i < vSize){
-    vector[i] = vector[i] * s
+    vector[i] = (float) (vector[i] * s)
   }
 } // scalerMultiply
 
 //@gcDataToGPU
 int s = 2
-int vSize = 200000000
+int vSize = 2000  // needs to be much larger to show GPU speedup
 //@gcDataFromGPU
 
 //@gcDataBoth
@@ -79,12 +79,26 @@ gpuStart = System.currentTimeMillis()
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()
 //@gcEmulate
+blockDim.x = blockSize.x
+blockDim.y = blockSize.y
+blockDim.z = blockSize.z
+
 float[] localV = new float[vSize]
-for ( i in 0 ..< vSize) localV[i] = (float) i * s
+for ( i in 0 ..< vSize) localV[i] =  (float)i
+
+for (gx in 0 ..< gridSize.x) {
+  blockIdx.x = gx
+  for (tx in 0..<blockSize.x) {
+    threadIdx.x = tx
+    scalerMultiply(s, vSize, localV)
+  }
+}
 emulateEnd = System.currentTimeMillis()
 //@gcFinalise
 for ( i in 0 ..<vSize)
-  assert (localV[i] - vector[i]) < 1e-5 : "At index $i got ${vector[i]}, expected ${localV[i]}}"
+//  assert Math.abs(localV[i] - 2*i) < 1e-5 : used for initial kernel checking
+  assert Math.abs(localV[i] - vector[i]) < 1e-5 :
+      "At index $i got ${vector[i]}, expected ${localV[i]}}"
 verifyEnd = System.currentTimeMillis()
 //@gcFinish
 		cuMemFree(paramBoth2)
@@ -93,6 +107,5 @@ println "Data initialise : ${gpuStart-startTime} msecs"
 println "GPU run time    : ${gpuEnd-gpuStart} msecs"
 println "Emulate time    : ${emulateEnd-gpuEnd} msecs"
 println "Verify time     : ${verifyEnd-emulateEnd} msecs"
-
   }
 }
