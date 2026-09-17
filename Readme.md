@@ -80,14 +80,14 @@ additional coding to calculate and print the times associated with each phase of
 the application.
 
 There are example scripts and built files for Pascal architecture based GPU cards in the 
-src/test/groovy/gCudaScripts folder, for Scaler multiply, vector add, symmetric matrix multiply
-and asymmetric matrix multiply.
+src/test/groovy/gCudaScripts folder, for Scaler multiply, vector add, symmetric matrix multiply,
+ asymmetric matrix multiply, and fused multiply add.
 
 ###### IMPORTANT NOTE
 All the scripts have vector and matrix sizes that make them amenable to testing on a
 normal CPU and thus do not show any speed up when processed on a GPU.  The sizes have
 to be increased substantially, for that to be seen.  The benefit of the script approach
-is that the user can be confident that the kernel definition will work when executed
+is that the user can be confident the kernel definition will work when executed
 on a GPU as the kernel have been exercised in exactly the same way as will occur in a GPU.
 
 ##### Commentary

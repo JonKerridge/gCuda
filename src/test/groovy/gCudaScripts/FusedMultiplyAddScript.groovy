@@ -2,12 +2,10 @@ import gCuda.Dim3
 import jcuda.Pointer
 import jcuda.driver.*
 
-import javax.swing.MenuSelectionManager
-
-//@gcDriverKernel   src/test/groovy/gCudaScripts  MatrixMultiply 61
+//@gcDriverKernel   src/test/groovy/gCudaScripts  FusedMltplyAdd 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
-Dim3 blockSize = new Dim3()   //must be a multiple of 32
+Dim3 blockSize = new Dim3()
 int sharedMemoryBytes = 0
 CUstream hStream = null
 Pointer extra = null
@@ -16,58 +14,58 @@ Pointer extra = null
 Dim3 blockIdx = new Dim3()
 Dim3 blockDim = new Dim3()
 Dim3 threadIdx = new Dim3()
+
 long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
 //@gcKernelDefinition
-def matrixMultiply = {float[] A, float[] B, float[] C, int N ->
+def fusedMultiplyAdd = {float[] a, float[] b, float[] c, float[] d, int n ->
   int row = blockIdx.y * blockDim.y + threadIdx.y
   int col = blockIdx.x * blockDim.x + threadIdx.x
-  if (row < N && col < N) {
+  if (row < n && col < n) {
     float sum = 0.0f
-    for ( int i = 0; i < N; i++) {
-      sum += A[row * N + i] * B[i * N + col]
+    for ( int i = 0; i < n; i++) {
+      sum += a[row * n + i] * b[i * n + col]
     }
-    C[row * N + col] = sum
+    d[row * n + col] = sum + c[row * n + col]
   }
-} //matrixMultiply
+} // fusedMultiplyAdd
 
 //@gcDataToGPU
 int mSize = 2   // needs to be much larger to make use of a GPU
 float[] a = new float[mSize * mSize]  // matrices stored linearly in ROW order
-float[] b = new float[mSize * mSize]      // only one property per line
-
-
+float[] b = new float[mSize * mSize]
+float[] c = new float[mSize * mSize]
 
 //@gcDataFromGPU
-float[] c = new float[mSize * mSize]
+float[] d = new float[mSize * mSize]
 
 //@gcDataBoth
 
 //@gcDataInitialise
-
 for ( i in 0 ..< mSize * mSize){
   a[i] = (float) i
   b[i] = (float) i
-  c[i] = 0.0f
+  c[i] = (float) i
+  d[i] = 0.0f
 }
 
-blockSize.x = 16   // must be a multiple of 32, depends on GPU used
-// determine number of blocks in grid, modify following as required
+blockSize.x = 16
 gridSize.x = (int)Math.ceil((double) mSize / blockSize.x)
 blockSize.y = 16
 gridSize.y = (int)Math.ceil((double) mSize / blockSize.y)
 println " blockSize = $blockSize, gridSize = $gridSize, mSize = $mSize"
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams a,b,c,mSize
+//@gcKernelParams a,b,c,d,mSize
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()
+
 //@gcEmulate
 blockDim = blockSize
 
-float[] lc = new float[mSize*mSize]
+float[] ld = new float[mSize*mSize]
 for ( gy in 0 ..< gridSize.y) {
   blockIdx.y = gy
   for (gx in 0 ..< gridSize.x) {
@@ -76,25 +74,24 @@ for ( gy in 0 ..< gridSize.y) {
       threadIdx.y = ty
       for ( tx in 0 ..< blockSize.x){
         threadIdx.x = tx
-        matrixMultiply(a, b, lc, mSize)
+        fusedMultiplyAdd(a, b, c, ld, mSize)
       }
     }
   }
 }
 emulateEnd = System.currentTimeMillis()
+
 //@gcFinalise
 
-//c = [2, 3, 6, 11]   //for local testing remove when using GPU
-
+d = [2, 4, 8, 14]   //for local testing comment out when using GPU
 for ( i in 0 ..< mSize* mSize){
-  assert Math.abs(lc[i] - c[i]) < 1e-5 :
-      "At index $i found ${lc[i]} but expected ${c[i]}"
+  assert Math.abs(ld[i] - d[i]) < 1e-5 :
+      "At index $i found ${d[i]} but expected ${ld[i]}"
 }
-
 verifyEnd = System.currentTimeMillis()
+
 //@gcFinish
 println "Data initialise : ${gpuStart-startTime} msecs"
 println "GPU run time    : ${gpuEnd-gpuStart} msecs"
 println "Emulate time    : ${emulateEnd-gpuEnd} msecs"
 println "Verify time     : ${verifyEnd-emulateEnd} msecs"
-

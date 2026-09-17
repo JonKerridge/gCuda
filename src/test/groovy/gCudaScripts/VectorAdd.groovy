@@ -32,7 +32,7 @@ class VectorAdd {
 
 
 //@gcDataToGPU
-    int vectorSize = 100
+    int vectorSize = 100  // needs to be at least 10000000 to show GPU speedup
     float[] vectorA = new float[vectorSize]
     float[] vectorB = new float[vectorSize]
 
@@ -47,7 +47,7 @@ class VectorAdd {
       vectorA[i] = (float) i
       vectorB[i] = (float) i
     }
-    blockSize.x = 32   // must be a multiple of 32, depends on GPU used
+    blockSize.x = 32
     gridSize.x = (int) Math.ceil((double) vectorSize / blockSize.x)
 
     println " blockSize = $blockSize, gridSize = $gridSize, vectorSize = $vectorSize"
@@ -94,9 +94,7 @@ class VectorAdd {
     gpuEnd = System.currentTimeMillis()
 
 //@gcEmulate
-    blockDim.x = blockSize.x
-    blockDim.y = blockSize.y
-    blockDim.z = blockSize.z
+blockDim = blockSize
 
     float[] localOutput = new float[vectorSize]
 

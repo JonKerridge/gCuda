@@ -65,9 +65,7 @@ gpuStart = System.currentTimeMillis()
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()
 //@gcEmulate
-blockDim.x = blockSize.x
-blockDim.y = blockSize.y
-blockDim.z = blockSize.z
+blockDim = blockSize
 
 float[] lc = new float[M*N]
 for ( gy in 0 ..< gridSize.y) {
