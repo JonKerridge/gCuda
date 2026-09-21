@@ -145,6 +145,5 @@ println "GPU run time    : ${gpuEnd-gpuStart} msecs"
 println "Emulate time    : ${emulateEnd-gpuEnd} msecs"
 println "Verify time     : ${verifyEnd-emulateEnd} msecs"
 
-
   }
 }
