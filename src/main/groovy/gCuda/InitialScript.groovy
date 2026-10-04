@@ -1,16 +1,21 @@
 package gCuda
 
 class InitialScript {
-    String gCudaScriptName, gCudaScriptPath
+    String gCudaScriptName, gCudaScriptPath, gpuCompute
 
     InitialScript(){
         // this version requires the user to input
         // package name and filename
-        print "Please enter the path for the groovyCuda script to generate:"
+        print "Please enter the path for the groovyCuda script to generate: "
         gCudaScriptPath = System.in.newReader().readLine()
-        print "Please enter the name of the groovyCuda script to generate:"
+        print "Please enter the name of the groovyCuda script to generate: "
         gCudaScriptName = System.in.newReader().readLine()
-        createScript(gCudaScriptPath, gCudaScriptName)
+        print "Please enter the compute capability of the GPU architecture: "
+        gpuCompute = System.in.newReader().readLine()
+        if (!gCudaScriptPath.trim().endsWith('/'))
+          gCudaScriptPath = gCudaScriptPath + '/'
+
+      createScript(gCudaScriptPath, gCudaScriptName, gpuCompute)
     }
 
   /**
@@ -19,17 +24,22 @@ class InitialScript {
    * @param gCudaSN the name of the script file
    */
     InitialScript(String gCudaSP,
-                  String gCudaSN ){
+                  String gCudaSN,
+                  String GPUcompute){
         gCudaScriptPath = gCudaSP
         gCudaScriptName = gCudaSN
-        createScript(gCudaScriptPath, gCudaScriptName)
+        gpuCompute = GPUcompute
+        if (!gCudaScriptPath.trim().endsWith('/'))
+          gCudaScriptPath = gCudaScriptPath + '/'
+
+      createScript(gCudaScriptPath, gCudaScriptName, gpuCompute)
     }
 /**
  *
  * @param path the gCudaScriptPath
  * @param name the gCudaScriptName, assumed to be nameScript.groovy
  */
-  static createScript (String path, String name){
+  static createScript (String path, String name, String GPUcompute){
         String scriptName
         scriptName = path + name + "Script.groovy"
         File scriptFile = new File (scriptName)
@@ -42,7 +52,7 @@ class InitialScript {
         sw.println("import jcuda.driver.*")
         sw.println("import static jcuda.driver.JCudaDriver.*\n")
 
-        sw.println ("//@gcDriverKernel   path  fileName GPUcompute\n\n" +
+        sw.println ("//@gcDriverKernel   $path  $name $GPUcompute\n\n" +
                 "Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase\n" +
                 "Dim3 blockSize = new Dim3()   \n" +
                 "int sharedMemoryBytes = 0\n" +
@@ -76,20 +86,22 @@ class InitialScript {
     } // createScript
 
     static void main(String[] args) {
-        String gCudaScriptName, gCudaScriptPath
+        String gCudaScriptName, gCudaScriptPath, gpuCompute
         if (args == []){
             print "Please enter the path for the groovyCuda script to generate:"
             gCudaScriptPath = System.in.newReader().readLine()
             print "Please enter the name of the groovyCuda script to generate:"
             gCudaScriptName = System.in.newReader().readLine()
-
+            print "Please enter the compute capability of the GPU architecture: "
+            gpuCompute = System.in.newReader().readLine()
         }
         else{
             gCudaScriptPath = args[0]
             gCudaScriptName = args[1]
+            gpuCompute = args[2]
         }
         if (!gCudaScriptPath.trim().endsWith('/'))
           gCudaScriptPath = gCudaScriptPath + '/'
-        createScript(gCudaScriptPath, gCudaScriptName)
+        createScript(gCudaScriptPath, gCudaScriptName, gpuCompute)
     }
 }

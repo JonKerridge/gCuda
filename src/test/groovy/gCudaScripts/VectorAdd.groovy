@@ -32,7 +32,7 @@ class VectorAdd {
 
 
 //@gcDataToGPU
-    int vectorSize = 100  // needs to be at least 10000000 to show GPU speedup
+    int vectorSize = 100000000  // needs to be at least 10000000 to show GPU speedup
     float[] vectorA = new float[vectorSize]
     float[] vectorB = new float[vectorSize]
 
@@ -47,7 +47,7 @@ class VectorAdd {
       vectorA[i] = (float) i
       vectorB[i] = (float) i
     }
-    blockSize.x = 32
+    blockSize.x = 384
     gridSize.x = (int) Math.ceil((double) vectorSize / blockSize.x)
 
     println " blockSize = $blockSize, gridSize = $gridSize, vectorSize = $vectorSize"

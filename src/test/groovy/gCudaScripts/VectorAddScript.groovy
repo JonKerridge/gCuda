@@ -44,7 +44,7 @@ import jcuda.driver.*
       vectorA[i] = (float) i
       vectorB[i] = (float) i
     }
-    blockSize.x = 32
+    blockSize.x = 1
     gridSize.x = (int) Math.ceil((double) vectorSize / blockSize.x)
 
     println " blockSize = $blockSize, gridSize = $gridSize, vectorSize = $vectorSize"
