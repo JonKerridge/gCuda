@@ -4,7 +4,7 @@ import gCuda.Builder
 
 class BuildScript {
   static void main(String[] args) {
-    Builder buildScript = new Builder('D:/IJGradle/gCUDA/src/test/groovy/gCudaScripts', 'DynamicSharedMemory')
+    Builder buildScript = new Builder('D:/IJGradle/gCUDA/src/test/groovy/ParallelReduction', 'ReductionV1')
     buildScript.build()
   }
 

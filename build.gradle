@@ -2,7 +2,7 @@ plugins {
   id 'groovy'
 }
 
-group = 'jonkerridge'
+group = 'ExamplesFromTheWeb'
 version = '1.0-SNAPSHOT'
 
 def static getOsString() {

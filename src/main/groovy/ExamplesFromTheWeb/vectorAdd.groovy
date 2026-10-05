@@ -1,4 +1,4 @@
-package jonkerridge
+package ExamplesFromTheWeb
 // required global declarations to access vectors
 int  blockDim_x, blockIdx_x, threadIdx_x
 

@@ -1,4 +1,4 @@
-package jonkerridge
+package ExamplesFromTheWeb
 
 //@gCudaDeclarations
 
