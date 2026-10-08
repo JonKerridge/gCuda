@@ -215,13 +215,10 @@ class Builder {
                         }  // def not processed
                         else{ //  def has been processed and reading rest of closure
                             // just have to append ; to each of the lines and
-                            // process any lines that contain //@gc:
+                            // process any lines that contain //@gc: copied ASIS
                             if (line.trim().startsWith('//@gc:')) {
                                 String cmnd = line - '//@gc:'
-                                if (cmnd.trim().endsWith(';'))
-                                    cFileWriter.println(cmnd)
-                                else
-                                    cFileWriter.println(cmnd + ';')
+                                cFileWriter.println(cmnd)
                             }
                             else
                                 cFileWriter.println("${appendSemicolon(line)}")
