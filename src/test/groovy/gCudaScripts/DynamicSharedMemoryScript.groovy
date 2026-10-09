@@ -21,7 +21,7 @@ long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
 
-//@gcKernelDefinition
+//@gcKernelDefinition C
 def dynamicReverse = {int[] d, int n ->
   //@gc:extern __shared__ int s[]
   int t = threadIdx.x

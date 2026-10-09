@@ -39,7 +39,7 @@ class Builder {
 
     void build (){
         String gcScriptFullPath, ptxFullPath, GPUcc
-        String kernelMethodName, cFileName
+        String kernelMethodName, cFileName, kernelNature
         if (!gcScriptPath.trim().endsWith('/'))
             gcScriptPath = gcScriptPath + '/'
         gcScriptFullPath = "$gcScriptPath${gcScriptName}Script.groovy"
@@ -159,72 +159,84 @@ class Builder {
                     if ( !line.startsWith('//@gc'))
                         gFileWriter.println "$line"
                     else {
-                        assert  line == '//@gcKernelDefinition'
-//            gFileWriter.println("\t\tString ptxFileName = '$ptxFullPath'\n")
+                        assert  line.startsWith('//@gcKernelDefinition')
+                        assert line.endsWith(('C')) || line.endsWith('G'):
+                            "kernelNature (G or C) in kernel definition annotation not specified"
+                        kernelNature = line.substring(line.length()-1)
+                        println "kernel nature is $kernelNature"
                         gFileWriter.println "$line"
                         section = 2
                     }
                     break
                 case 2: //process kernel definition closure
-                    if ( !line.startsWith('//@gc')) {
-                        gFileWriter.println "$line"
-                        // now process the def line
-                        if (!defProcessed) {
-                            List<String> defTokens = line.tokenize(',')
+                    if (kernelNature == 'G') {
+                        if (!line.startsWith('//@gc')) {
+                            gFileWriter.println "$line"
+                            // now process the def line
+                            if (!defProcessed) {
+                                List<String> defTokens = line.tokenize(',')
 //              println "DEF: ${defTokens}"
-                            if (defTokens[0].trim().startsWith('def') ){
-                                defProcessed = true
-                                List<String> nameTokens = defTokens[0].tokenize()
-                                kernelMethodName = nameTokens[1]
-                                if (kernelMethodName.endsWith('=')) kernelMethodName = kernelMethodName - '='
-                                if (kernelMethodName.endsWith('={')) kernelMethodName = kernelMethodName - '={'
+                                if (defTokens[0].trim().startsWith('def')) {
+                                    defProcessed = true
+                                    List<String> nameTokens = defTokens[0].tokenize()
+                                    kernelMethodName = nameTokens[1]
+                                    if (kernelMethodName.endsWith('=')) kernelMethodName = kernelMethodName - '='
+                                    if (kernelMethodName.endsWith('={')) kernelMethodName = kernelMethodName - '={'
 //                println "kernel method is called: $kernelMethodName"
-                                cMethodDef = cMethodDef + "$kernelMethodName ("
-                                for (i in 0..< defTokens.size()){
-                                    String paramName, paramType
-                                    boolean arrayType
-                                    // extract the type of all the parameters
-                                    List<String> paramString = defTokens[i].tokenize()
-                                    if (i < (defTokens.size()-1)) {
-                                        paramName = paramString[paramString.size() - 1]
-                                        paramType = paramString[paramString.size() - 2]  // could be var or array
-                                    }
-                                    else {  //last param has to ignore ->
-                                        if (paramString[paramString.size() - 1].trim() == '->'){
-                                            paramName = paramString[paramString.size() - 2]
-                                            paramType = paramString[paramString.size() - 3]  // could be var or array
-                                        }
-                                        else{
+                                    cMethodDef = cMethodDef + "$kernelMethodName ("
+                                    for (i in 0..<defTokens.size()) {
+                                        String paramName, paramType
+                                        boolean arrayType
+                                        // extract the type of all the parameters
+                                        List<String> paramString = defTokens[i].tokenize()
+                                        if (i < (defTokens.size() - 1)) {
                                             paramName = paramString[paramString.size() - 1]
-                                            paramType = paramString[paramString.size() - 2]  // could be var or array
+                                            paramType = paramString[paramString.size() - 2]
+                                            // could be var or array
+                                        } else {  //last param has to ignore ->
+                                            if (paramString[paramString.size() - 1].trim() == '->') {
+                                                paramName = paramString[paramString.size() - 2]
+                                                paramType = paramString[paramString.size() - 3]
+                                                // could be var or array
+                                            } else {
+                                                paramName = paramString[paramString.size() - 1]
+                                                paramType = paramString[paramString.size() - 2]
+                                                // could be var or array
+                                            }
                                         }
-                                    }
-                                    if (paramType.contains('int') ) cMethodDef = cMethodDef + 'int '
-                                    if (paramType.contains('float') ) cMethodDef = cMethodDef + 'float '
-                                    if (paramType.contains('double') ) cMethodDef = cMethodDef + 'double '
-                                    if (paramType.contains('[]')) cMethodDef = cMethodDef + "*$paramName"
-                                    else cMethodDef = cMethodDef + "$paramName"
-                                    if ( i < (defTokens.size()-1)) cMethodDef = cMethodDef + ','
-                                } // defTokens loop
-                                cMethodDef = cMethodDef + ") {"
-                                cFileWriter.println("$cMethodDef")
-                            } // starts with def
-                            else {  //def line, expected but not found
-                                println "$line :: read, but expected a closure definition line"
-                            }
-                        }  // def not processed
-                        else{ //  def has been processed and reading rest of closure
-                            // just have to append ; to each of the lines and
-                            // process any lines that contain //@gc: copied ASIS
-                            if (line.trim().startsWith('//@gc:')) {
-                                String cmnd = line - '//@gc:'
-                                cFileWriter.println(cmnd)
-                            }
-                            else
+                                        if (paramType.contains('int')) cMethodDef = cMethodDef + 'int '
+                                        if (paramType.contains('float')) cMethodDef = cMethodDef + 'float '
+                                        if (paramType.contains('double')) cMethodDef = cMethodDef + 'double '
+                                        if (paramType.contains('[]')) cMethodDef = cMethodDef + "*$paramName" else cMethodDef = cMethodDef + "$paramName"
+                                        if (i < (defTokens.size() - 1)) cMethodDef = cMethodDef + ','
+                                    } // defTokens loop
+                                    cMethodDef = cMethodDef + ") {"
+                                    cFileWriter.println("$cMethodDef")
+                                } // starts with def
+                                else {  //def line, expected but not found
+                                    println "$line :: read, but expected a closure definition line"
+                                }
+                            }  // def not processed
+                            else { //  def has been processed and reading rest of closure
+                                // just have to append ; to each of the lines
                                 cFileWriter.println("${appendSemicolon(line)}")
+                            }
+                        } // line starts with //@gc
+                        else {
+                            assert line == '//@gcDataToGPU'
+                            gFileWriter.println "$line"
+                            section = 3
                         }
-                    } // line starts with //@gc
-                    else {
+                    } // end of kernelNature equals G
+                    else { // kernel is just C enclosed in /* ... */ comment
+                        if (line != '/*'){
+                            // blank or other comment lines
+                            gFileWriter.println "$line"
+                        }
+
+
+
+                        // line starts with //@gc
                         assert line == '//@gcDataToGPU'
                         gFileWriter.println "$line"
                         section = 3

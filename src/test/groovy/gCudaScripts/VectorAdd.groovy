@@ -22,7 +22,7 @@ class VectorAdd {
     long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
     startTime = System.currentTimeMillis()
 
-//@gcKernelDefinition
+//@gcKernelDefinition G
     def add = { int n, float[] a, float[] b, float[] sum ->
       int i = blockIdx.x * blockDim.x + threadIdx.x
       if (i < n) {
@@ -32,7 +32,7 @@ class VectorAdd {
 
 
 //@gcDataToGPU
-    int vectorSize = 100000000  // needs to be at least 10000000 to show GPU speedup
+    int vectorSize = 100  // needs to be at least 10000000 to show GPU speedup
     float[] vectorA = new float[vectorSize]
     float[] vectorB = new float[vectorSize]
 
@@ -47,7 +47,7 @@ class VectorAdd {
       vectorA[i] = (float) i
       vectorB[i] = (float) i
     }
-    blockSize.x = 384
+    blockSize.x = 1
     gridSize.x = (int) Math.ceil((double) vectorSize / blockSize.x)
 
     println " blockSize = $blockSize, gridSize = $gridSize, vectorSize = $vectorSize"

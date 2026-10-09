@@ -18,7 +18,7 @@ Dim3 threadIdx = new Dim3()
 long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
-//@gcKernelDefinition
+//@gcKernelDefinition G
 def fusedMultiplyAdd = {float[] a, float[] b, float[] c, float[] d, int n ->
   int row = blockIdx.y * blockDim.y + threadIdx.y
   int col = blockIdx.x * blockDim.x + threadIdx.x

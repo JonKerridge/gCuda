@@ -19,7 +19,7 @@ Dim3 threadIdx = new Dim3()
 long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
-//@gcKernelDefinition
+//@gcKernelDefinition G
 def matrixMultiply = {float[] A, float[] B, float[] C, int N ->
   int row = blockIdx.y * blockDim.y + threadIdx.y
   int col = blockIdx.x * blockDim.x + threadIdx.x

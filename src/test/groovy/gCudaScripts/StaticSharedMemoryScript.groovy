@@ -18,7 +18,7 @@ long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
 
-//@gcKernelDefinition
+//@gcKernelDefinition C
 def staticReverse = {int[] d, int n ->
   //@gc:__shared__ int s[64];
   int t = threadIdx.x

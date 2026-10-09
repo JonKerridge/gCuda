@@ -19,7 +19,7 @@ Dim3 threadIdx = new Dim3()
 long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
-//@gcKernelDefinition
+//@gcKernelDefinition G
 def scalerMultiply = {int s, int vSize, float[] vector ->
   int i = blockIdx.x * blockDim.x + threadIdx.x
   if ( i < vSize){

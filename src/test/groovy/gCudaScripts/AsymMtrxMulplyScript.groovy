@@ -17,7 +17,7 @@ Dim3 threadIdx = new Dim3()
 long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
-//@gcKernelDefinition
+//@gcKernelDefinition G
 def AsymMatrixMultiply = {float[] A, float[] B, float[] C, int M, int K, int N ->
   // C[r][c] = sumOverK of A[i][k] * B[k][j]
   int row = blockIdx.y * blockDim.y + threadIdx.y

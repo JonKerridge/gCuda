@@ -19,7 +19,7 @@ import jcuda.driver.*
     long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
     startTime = System.currentTimeMillis()
 
-//@gcKernelDefinition
+//@gcKernelDefinition G
     def add = { int n, float[] a, float[] b, float[] sum ->
       int i = blockIdx.x * blockDim.x + threadIdx.x
       if (i < n) {
