@@ -233,6 +233,7 @@ class Builder {
                             // blank or other comment lines
                             gFileWriter.println "$line"
                         }
+                        // now process the /* line
 
 
 
