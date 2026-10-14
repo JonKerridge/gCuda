@@ -23,18 +23,23 @@ long startTime, gpuStart, gpuEnd, emulateEnd, verifyEnd
 startTime = System.currentTimeMillis()
 
 
-//@gcKernelDefinition
-def dynamicReverse = {int[] d, int n ->
-  //@gc:extern __shared__ int s[]
-  int t = threadIdx.x
-  int tr = n-t-1
-  s[t] = d[t]
-  //@gc:__syncthreads();
-  d[t] = s[tr]
+//@gcKernelDefinition C
+
+/*@gc start of C code
+extern "C"
+__global__ void dynamicReverse ( int *d, int n ) {
+  extern __shared__ int s[];
+  int t = threadIdx.x;
+  int tr = n-t-1;
+  s[t] = d[t];
+  __syncthreads();
+  d[t] = s[tr];
 }
 
+end of C coding */
+
 //@gcDataToGPU
-int n = 1024   //
+int n = 1024  // GT1030 limit is 1024
 
 //@gcDataFromGPU
 
@@ -48,7 +53,7 @@ for (i in 0 ..< n){
   r[i] = n-i-1
 }
 
-sharedMemoryBytes = n* Sizeof.INT //required for dynamic shared memory
+sharedMemoryBytes = n * Sizeof.INT //required for dynamic shared memory
 blockSize.x = n
 // determine number of blocks in grid, modify following as required
 gridSize.x = (int)Math.ceil((double) n / blockSize.x)
@@ -65,7 +70,7 @@ gpuStart = System.currentTimeMillis()
 		cuCtxCreate(context, 0, device)
 		// Load the PTX file containing the kernel 
 		CUmodule module = new CUmodule() 
-		cuModuleLoad(module, 'src/test/groovy/gCudaScripts//nDynamicSharedMemory.ptx') 
+		cuModuleLoad(module, 'src/test/groovy/gCudaScripts/nDynamicSharedMemory.ptx') 
 		CUfunction function = new CUfunction()
 		cuModuleGetFunction(function, module, 'dynamicReverse')
 		CUdeviceptr paramBoth1 = new CUdeviceptr()

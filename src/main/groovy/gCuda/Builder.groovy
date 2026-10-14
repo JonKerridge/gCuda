@@ -43,6 +43,7 @@ class Builder {
         if (!gcScriptPath.trim().endsWith('/'))
             gcScriptPath = gcScriptPath + '/'
         gcScriptFullPath = "$gcScriptPath${gcScriptName}Script.groovy"
+        println "Building $gcScriptFullPath"
 
         File gFile, cFile
         PrintWriter gFileWriter, cFileWriter
@@ -51,6 +52,8 @@ class Builder {
         List <String> lineTokens = []
         String cMethodDef = "__global__ void "
         boolean defProcessed = false
+        boolean processingC = false
+        boolean postCprocessing = false
 
         def appendSemicolon = {String inLine ->
             // used to convert the kernel closure def to C
@@ -91,7 +94,7 @@ class Builder {
         } // extract data types
 
         def getSize = { String pType ->
-            String pSize
+            String pSize = ''
             switch (pType) {
                 case 'int':
                     pSize = 'Sizeof.INT'
@@ -136,13 +139,12 @@ class Builder {
                         GPUcc = lineTokens[3]
 //            println "$line: package: $packageName, class: $className"
                         String gFileName = "${lineTokens[1]}/${className}.groovy"
-                        println "Groovy file is $gFileName"
+                        println "Groovy executable file is $gFileName"
                         gFile = new File(gFileName)
                         gFileWriter = new PrintWriter(gFile)
                         cFileName = "${lineTokens[1]}/c${className}.cu"
                         cFile = new File(cFileName)
                         cFileWriter = new PrintWriter(cFile)
-                        cFileWriter.println 'extern "C"'
                         ptxFullPath = "${lineTokens[1]}/n${className}.ptx"
                         gFileWriter.println "package $packageName\n"
                         gFileWriter.println("import gCuda.Dim3")
@@ -163,13 +165,12 @@ class Builder {
                         assert line.endsWith(('C')) || line.endsWith('G'):
                             "kernelNature (G or C) in kernel definition annotation not specified"
                         kernelNature = line.substring(line.length()-1)
-                        println "kernel nature is $kernelNature"
                         gFileWriter.println "$line"
                         section = 2
                     }
                     break
-                case 2: //process kernel definition closure
-                    if (kernelNature == 'G') {
+                case 2: //process kernel definition closure or C code
+                    if (kernelNature == 'G') {  //groovy clousre
                         if (!line.startsWith('//@gc')) {
                             gFileWriter.println "$line"
                             // now process the def line
@@ -210,6 +211,7 @@ class Builder {
                                         if (paramType.contains('[]')) cMethodDef = cMethodDef + "*$paramName" else cMethodDef = cMethodDef + "$paramName"
                                         if (i < (defTokens.size() - 1)) cMethodDef = cMethodDef + ','
                                     } // defTokens loop
+                                    cFileWriter.println 'extern "C"'
                                     cMethodDef = cMethodDef + ") {"
                                     cFileWriter.println("$cMethodDef")
                                 } // starts with def
@@ -225,23 +227,60 @@ class Builder {
                         else {
                             assert line == '//@gcDataToGPU'
                             gFileWriter.println "$line"
+                            cFileWriter.flush()
+                            cFileWriter.close()
                             section = 3
                         }
                     } // end of kernelNature equals G
-                    else { // kernel is just C enclosed in /* ... */ comment
-                        if (line != '/*'){
-                            // blank or other comment lines
-                            gFileWriter.println "$line"
+ //-----------------------------------------------------------------------------------------
+                    else { // kernel is just C enclosed in /*@gc ... */ comment
+                        if (!postCprocessing) {
+
+                            if ((line != '/*@gc') && (!processingC)) {
+                                // blank or other comment lines
+                                gFileWriter.println "$line"
+                            } else {
+                                // now process the /*@gc line
+                                if ((line == '/*@gc') && (!processingC)) {
+                                    gFileWriter.println "/*@gc start of C code"
+                                    processingC = true
+//                                println "$line and processingC = $processingC"
+                                } else {  //now found the C statements
+                                    if ((line != '*/') && (processingC)) {
+                                        // extract kernel method name from --global-- line
+                                        if (line.contains('__global__')) {
+                                            int c = 16
+                                            while ((line[c] != ' ') && (line[c] != '(')) c = c + 1
+                                            kernelMethodName = line.substring(16, c).trim()
+                                            println "C kernel executing: $kernelMethodName"
+                                        }
+                                        gFileWriter.println "$line"
+                                        // copy line directly to groovy output
+                                        cFileWriter.println "$line" // copy line to cu file
+                                    } else {
+                                        // found the */ end of C comment line
+                                        gFileWriter.println "end of C coding $line"
+                                        // copy to groovy output
+                                        postCprocessing = true
+                                        cFileWriter.flush()
+                                        cFileWriter.close()
+                                    }
+                                }
+                            }
                         }
-                        // now process the /* line
-
-
-
-                        // line starts with //@gc
-                        assert line == '//@gcDataToGPU'
-                        gFileWriter.println "$line"
-                        section = 3
-                    }
+                        else { //processing blank and comment lines after C coding
+                            if (!line.startsWith('//@gc')) {
+                                // a blank or comment line
+                                gFileWriter.println "$line"
+                            } else {
+                                // line starts with //@gc
+                                assert line == '//@gcDataToGPU':
+                                    " expecting //@gcDataToGPU got $line"
+                                gFileWriter.println "$line"
+                                section = 3
+                            }
+                        } // end of post C processing
+                     } // end of C code processing
                     break
                 case 3: //process data to GPU
                     if (!line.startsWith('//@gc')){
@@ -292,7 +331,7 @@ class Builder {
                         // process the kernel parameters annotation
                         lineTokens = line.tokenize(',')
                         lineTokens[0] = lineTokens[0] - '//@gcKernelParams '
-//            println "Parameters are: ${lineTokens}"
+//                println "Parameters are: ${lineTokens}"
                         // now generate most of the required code
                         // device context, module and function initialisation
                         gFileWriter.println "\t\tsetExceptionsEnabled(true)"
@@ -412,7 +451,6 @@ class Builder {
                         }
                         section = 11
                     }
-
                     break
                 case 11: // copy any remaining lines as is
                     gFileWriter.println "$line"
@@ -422,11 +460,10 @@ class Builder {
 
         gFileWriter.println "  }"
         gFileWriter.println "}"
-        // close both files
+        // close gFileWriter
         gFileWriter.flush()
         gFileWriter.close()
-        cFileWriter.flush()
-        cFileWriter.close()
+
         // now compile the C code into a ptx file
         String commandString = "nvcc -ptx -arch=compute_${GPUcc} ${cFileName} -o ${ptxFullPath}"
         println "Executing: $commandString"
@@ -437,5 +474,4 @@ class Builder {
         proc.waitForOrKill(15000)
         println "out> $sOut\nerr> $sErr"
     } //build
-
 } // class

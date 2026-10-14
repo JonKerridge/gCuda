@@ -27,24 +27,27 @@ int sizeOfBlock = 128
 int elements = 96 * sizeOfBlock   // number of elements in the input array
 // 96 is limit of size for GT1030
 
-//@gcKernelDefinition
-def reductionV3 = { int[] inData, int[] outData ->
-  //@gc:extern __shared__ int sData[]
+//@gcKernelDefinition C
+/*@gc start of C code
+extern "C"
+__global__ void reductionV3 ( int *inData, int *outData ) {
+  extern __shared__ int sData[];
   // thread loads one elements from inData to shared sData
-  int tid = threadIdx.x
-  int i = blockIdx.x * blockDim.x + threadIdx.x
-  sData[tid] = inData[i]
-  //@gc:__syncthreads()
+  int tid = threadIdx.x;
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  sData[tid] = inData[i];
+  __syncthreads();
   // do reduction in shared sData
   for ( int s = blockDim.x / 2; s > 0; s >>= 1){
     if (tid < s)
-      sData[tid] += sData[tid + s]
-    //@gc:__syncthreads()
+      sData[tid] += sData[tid + s];
+    __syncthreads();
   }
   // write result back to outData
-  if (tid == 0) outData[blockIdx.x] = sData[0]
+  if (tid == 0) outData[blockIdx.x] = sData[0];
 }
 
+end of C coding */
 
 //@gcDataToGPU
 int[] inData = new int[elements]

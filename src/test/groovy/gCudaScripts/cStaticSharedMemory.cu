@@ -1,5 +1,5 @@
 extern "C"
-__global__ void staticReverse (int *d,int n) {
+__global__ void staticReverse (int *d, int n ){
   __shared__ int s[64];
   int t = threadIdx.x;
   int tr = n-t-1;

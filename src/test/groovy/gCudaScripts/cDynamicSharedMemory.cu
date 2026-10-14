@@ -1,5 +1,5 @@
 extern "C"
-__global__ void dynamicReverse (int *d,int n) {
+__global__ void dynamicReverse ( int *d, int n ) {
   extern __shared__ int s[];
   int t = threadIdx.x;
   int tr = n-t-1;

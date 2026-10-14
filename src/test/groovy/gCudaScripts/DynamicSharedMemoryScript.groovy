@@ -5,7 +5,7 @@ import jcuda.Pointer
 import jcuda.Sizeof
 import jcuda.driver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts/  DynamicSharedMemory 61
+//@gcDriverKernel   src/test/groovy/gCudaScripts  DynamicSharedMemory 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()
@@ -22,17 +22,22 @@ startTime = System.currentTimeMillis()
 
 
 //@gcKernelDefinition C
-def dynamicReverse = {int[] d, int n ->
-  //@gc:extern __shared__ int s[]
-  int t = threadIdx.x
-  int tr = n-t-1
-  s[t] = d[t]
-  //@gc:__syncthreads();
-  d[t] = s[tr]
+
+/*@gc
+extern "C"
+__global__ void dynamicReverse ( int *d, int n ) {
+  extern __shared__ int s[];
+  int t = threadIdx.x;
+  int tr = n-t-1;
+  s[t] = d[t];
+  __syncthreads();
+  d[t] = s[tr];
 }
 
+*/
+
 //@gcDataToGPU
-int n = 1024   // works for sizes greater than 64
+int n = 1024  // GT1030 limit is 1024
 
 //@gcDataFromGPU
 
