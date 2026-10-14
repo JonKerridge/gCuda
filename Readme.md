@@ -32,7 +32,15 @@ creating such a script.
 
 The annotation _@gKernelDefintion_ is used to define the kernel operations that are
 to be undertaken.  It takes the form of a closure which will be converted into  a
-Cuda .cu file.  The parameters are specified using a Java and C style declaration.
+Cuda .cu file.  The parameters are specified using a Java and C style declaration. The 
+annotation is ended with either _G_ to indicate a Groovy closure is used to define the
+kernel function.  A _C_ indicates the function(s) are specified using pure C coding.  
+The C code is bracketed with _/*@gc_ and _*/_, on separate lines and at the start of the line.
+All function definitions should be preceded by the specification _extern "C"_.
+
+Note:
+The kernel function can only be defined using a closure if and only if the function contains
+no Cuda specific function calls or specifiers, such as ___syncthreads()_ or _volatile_.
 
 The next thing we need to do is define the data that will be passed between host and GPU.  
 I have introduced three annotations to specify the data; _@ggcDataToGPU_, _@gcDataFromGPU_ 
@@ -56,13 +64,13 @@ The result of processing the Groovy specification will be a separate file for th
 with the variable names modified to what is expected.  
 
 The script then does some real processing by initialising the required data and defining 
-the values for kernel parameters such a block and grid size.
+the values for kernel parameters such aa block and grid size.
 
 The annotation _//@gcKernelParams ..._   causes the call of the kernel function with the 
 application parameters specified in the order they are required by the kernel method.
 
 The annotation _//@gcKernelEnd_ signifies the  place where any following code will be processed
-as inline Groovy code.
+as inline Groovy code, such as timing data.
 
 
 The _//@gcEmulate_ annotation indicates where any user code that emulates the required 
@@ -70,7 +78,7 @@ processing usinf the CPU only can be written.
 
 The annotation _//@gcFinalise_ indicates that any following coding will be executed inline 
 and can be used to check the processing by the CPU and the CPU emulated code as identical.
-The example scripts have two assert statements defined; one for when doing local testing 
+Some of the example scripts have two _assert_ statements defined; one for when doing local testing 
 and the other when the code has been built and is using a GPU.  Only one should be used at
 any one time.  
 
