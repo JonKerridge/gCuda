@@ -12,7 +12,7 @@ into this project to make comparison easier to assimilate as simple text files.
 
 Observation of the java calling code shows the amount of boilerplate required! <br>
 
-In the Groovy script I have introduced @ annotations preceded by // so that they do 
+In the Groovy script I have introduced _@gc_ annotations preceded by // so that they do 
 not cause any problem when compiling the script and running it.<br>
 
 The  scripts show the minimal Groovy coding required with the annotations added.<br>
@@ -44,10 +44,10 @@ no Cuda specific function calls or specifiers, such as ___syncthreads()_ or _vol
 
 The next thing we need to do is define the data that will be passed between host and GPU.  
 I have introduced three annotations to specify the data; _@ggcDataToGPU_, _@gcDataFromGPU_ 
-and @_gcDataBoth_.  The first is for data being transferred from the host to the GPU 
-before the kernel is invoked, the second for data being transferred from the GPU to the 
+and @_gcDataBoth_.  The first is for data being transferred from the host to the GPU device
+before the kernel is invoked, the second for data being transferred from the GPU device to the 
 host once kernel processing has finished. Finally, an option in which data is transferred 
-to the GPU from the host at the start of kernel processing and is then transferred back to
+to the GPU device from the host at the start of kernel processing and is then transferred back to
 the host once kernel processing is finished.
 
 NOTE the declarations uses a Java and C style declaration so they can be more easily accessed in
@@ -64,7 +64,7 @@ The result of processing the Groovy specification will be a separate file for th
 with the variable names modified to what is expected.  
 
 The script then does some real processing by initialising the required data and defining 
-the values for kernel parameters such aa block and grid size.
+the values for kernel parameters such aa block and grid size and sharedMemoryBytes.
 
 The annotation _//@gcKernelParams ..._   causes the call of the kernel function with the 
 application parameters specified in the order they are required by the kernel method.
@@ -74,10 +74,10 @@ as inline Groovy code, such as timing data.
 
 
 The _//@gcEmulate_ annotation indicates where any user code that emulates the required 
-processing usinf the CPU only can be written.
+processing using the CPU only can be written.
 
 The annotation _//@gcFinalise_ indicates that any following coding will be executed inline 
-and can be used to check the processing by the CPU and the CPU emulated code as identical.
+and can be used to check the processing by the GPU and the CPU emulated code as identical.
 Some of the example scripts have two _assert_ statements defined; one for when doing local testing 
 and the other when the code has been built and is using a GPU.  Only one should be used at
 any one time.  
@@ -89,7 +89,12 @@ the application.
 
 There are example scripts and built files for Pascal architecture based GPU cards in the 
 src/test/groovy/gCudaScripts folder, for Scaler multiply, vector add, symmetric matrix multiply,
- asymmetric matrix multiply, and fused multiply add.
+ asymmetric matrix multiply, and fused multiply add.  The Shared Memory examples use C to 
+define the kernel functions as they use the __syncthreads() function and other specifiers.
+
+The package ParallelReduction contains a sequence of kernel definitions that correspond to 
+those describer in https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf.  
+These all use C to define the kernels as optimisations are introduced.
 
 ###### IMPORTANT NOTE
 All the scripts have vector and matrix sizes that make them amenable to testing on a

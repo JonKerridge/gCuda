@@ -10,9 +10,9 @@ Open a Groovy Console and copy the script into the console area
 Modify the script to undertake the required application.
 
 If you add code to emulate the operation, as if it were run on a GPU,
-ensure you reduce the size of the application to sensible proportions. The
-example scripts show how the kernel definition cam be emulated as if
-theu were running on a GPU using CUDA internal idiomatic vector and matrix addressing.
+ensure you reduce the size of the application to sensible proportions. Some of the
+example scripts show how the kernel definition can be emulated as if
+they were running on a GPU using CUDA internal idiomatic vector and matrix addressing.
 
 Once you have got it working you can then copy the updated code back into
 script file overwriting what was there originally.
@@ -38,3 +38,13 @@ and should execute on your host PC and GPU.
 
 There are several examples in src/test/groovy/gCudaScripts, VectorAdd, MatrixMultiply,
 AsymMatrixMultiply, and ScalerMultiply.
+
+There are also examples of kernel applications that use C definitions, rather than a Groovy closure, 
+for example, Static Shared memory and Dynamic Memory.  These kernels use special Cuda functions and 
+qualifiers, such as __syncthreads(), __device__ and volatile.
+
+The package ParallelReduction shows a number of C defined kernels derived from the webinar at:
+https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf .
+
+Please note that the //@gcKernelDefinition annotation has a qualifer C or G to indicate the style of 
+the kernel definition language.
