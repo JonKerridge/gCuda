@@ -1,9 +1,19 @@
 plugins {
   id 'groovy'
+  id 'java-library'
+  id 'maven-publish'
 }
 
-group = 'ExamplesFromTheWeb'
-version = '1.0-SNAPSHOT'
+group = 'jonkerridge'
+version = '1.0.0'
+
+// The build file assumes the existence of a gradle properties file containing the
+// user's name and key in a file called "user.home"/.github/gradle.properties
+String userDir = System.getProperty("user.home")
+String propertyFileName = "$userDir/.github/gradle.properties"
+File propsFile = new File(propertyFileName)
+Properties props = new Properties()
+props.load(propsFile.newDataInputStream())
 
 def static getOsString() {
   String vendor = System.getProperty("java.vendor");
@@ -57,6 +67,7 @@ println "ArchString  = ${getArchString()}"
 
 repositories {
   mavenCentral()
+  mavenLocal()
 }
 
 dependencies {
@@ -111,4 +122,33 @@ dependencies {
 
 test {
   useJUnitPlatform()
+}
+
+task sourcesJar(type: Jar) {
+  from sourceSets.main.allSource
+  archiveClassifier.set("sources")
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+publishing {
+  repositories {
+    maven {
+      name = "GitHubPackages"
+      url = "https://maven.pkg.github.com/JonKerridge/gCuda"
+      credentials {
+        username = props.getProperty("gpr.user")
+        password = props.getProperty("gpr.key")
+      }
+    }
+  }
+  publications {
+    gCuda(MavenPublication) {
+      artifactId = 'gCuda'
+      from components.java
+      artifact sourcesJar
+    }
+  }
 }

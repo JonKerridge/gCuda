@@ -22,6 +22,7 @@ class InitialScript {
    *
    * @param gCudaSP the path to the directory holding the script file
    * @param gCudaSN the name of the script file
+   * @param GPUcompute the compute architecture of the GPU being used
    */
     InitialScript(String gCudaSP,
                   String gCudaSN,
@@ -70,7 +71,7 @@ class InitialScript {
                         "//@gcDataFromGPU\n\n" +
                         "//@gcDataBoth\n\n" +
                         "//@gcDataInitialise\n\n" +
-                        "blockSize.x = 32   \n"+
+                        "blockSize.x = 32  // modify as required \n"+
                         "// determine number of blocks in grid, modify following as required\n" +
                         "gridSize.x = (int)Math.ceil((double) DATASIZE / blockSize.x)\n"+
                         "//@gcKernelParams \n\n" +
