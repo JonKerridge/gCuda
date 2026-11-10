@@ -1,13 +1,10 @@
-package ParallelReduction
-
 import gCuda.Dim3
 import jcuda.Pointer
 import jcuda.Sizeof
 import jcuda.driver.*
+import static jcuda.driver.JCudaDriver.*
 
-// this does not work on a GT1030 possibly due to inherent bank conflicts
-
-//@gcDriverKernel   src/test/groovy/ParallelReduction/  ReductionV2 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()   
@@ -69,7 +66,9 @@ sharedMemoryBytes = elements * Sizeof.INT
 println " blockSize = $blockSize, gridSize = $gridSize, elements = $elements"
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams inData, outData
+//@gcKernelInit
+
+//@gcCall reductionV2 ( inData, outData )
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()

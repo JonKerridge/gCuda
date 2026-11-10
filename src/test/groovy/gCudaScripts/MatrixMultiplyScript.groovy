@@ -1,10 +1,12 @@
 import gCuda.Dim3
 import jcuda.Pointer
+import jcuda.Sizeof
 import jcuda.driver.*
+import static jcuda.driver.JCudaDriver.*
 
 import javax.swing.MenuSelectionManager
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  MatrixMultiply 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()   //must be a multiple of 32
@@ -60,7 +62,9 @@ gridSize.y = (int)Math.ceil((double) mSize / blockSize.y)
 println " blockSize = $blockSize, gridSize = $gridSize, mSize = $mSize"
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams a,b,c,mSize
+//@gcKernelInit
+
+//@gcCall matrixMultiply(a,b,c,mSize)
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()

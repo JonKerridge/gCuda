@@ -2,9 +2,11 @@
 
 import gCuda.Dim3
 import jcuda.Pointer
+import jcuda.Sizeof
 import jcuda.driver.*
+import static jcuda.driver.JCudaDriver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  VectorAdd 61
+//@gcDriverKernel 61
 
     Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
     Dim3 blockSize = new Dim3()   //must be a multiple of 32
@@ -51,8 +53,9 @@ import jcuda.driver.*
     // determines number of blocks in grid
     gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams vectorSize, vectorA, vectorB, outVector
+//@gcKernelInit
 
+//@gcCall add(vectorSize, vectorA, vectorB, outVector)
 //@gcKernelEnd
     gpuEnd = System.currentTimeMillis()
 

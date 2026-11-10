@@ -1,8 +1,10 @@
 import gCuda.Dim3
 import jcuda.Pointer
+import jcuda.Sizeof
 import jcuda.driver.*
+import static jcuda.driver.JCudaDriver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  AsymMatrixMultiply 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()   //must be a multiple of 32
@@ -60,7 +62,9 @@ gridSize.y = (int)Math.ceil((double) M*K / blockSize.y)
 println " blockSize = $blockSize, gridSize = $gridSize, M=$M, K=$K, N=$N"
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams a, b, c, M, K ,N
+//@gcKernelInit
+
+//@gcCall AsymMatrixMultiply (a, b, c, M, K ,N)
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()

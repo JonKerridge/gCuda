@@ -4,7 +4,7 @@ import jcuda.Sizeof
 import jcuda.driver.*
 import static jcuda.driver.JCudaDriver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  ScalerMultiply 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()
@@ -42,8 +42,10 @@ blockSize.x = 384
 gridSize.x = (int)Math.ceil((double) vSize / blockSize.x)
 println " blockSize = $blockSize, gridSize = $gridSize, s=$s, vSize = $vSize"
 gpuStart = System.currentTimeMillis()
-//@gcKernelParams s, vSize, vector
 
+//@gcKernelInit
+
+//@gcCall scalerMultiply(s, vSize, vector)
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()
 //@gcEmulate

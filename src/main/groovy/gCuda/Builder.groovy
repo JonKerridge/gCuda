@@ -247,13 +247,14 @@ class Builder {
 //                                println "$line and processingC = $processingC"
                                 } else {  //now found the C statements
                                     if ((line != '*/') && (processingC)) {
-                                        // extract kernel method name from --global-- line
-                                        if (line.contains('__global__')) {
-                                            int c = 16
-                                            while ((line[c] != ' ') && (line[c] != '(')) c = c + 1
-                                            kernelMethodName = line.substring(16, c).trim()
-                                            println "C kernel executing: $kernelMethodName"
-                                        }
+                                            // no longer required as method name obtained from @gcCall
+//                                        // extract kernel method name from --global-- line
+//                                        if (line.contains('__global__')) {
+//                                            int c = 16
+//                                            while ((line[c] != ' ') && (line[c] != '(')) c = c + 1
+//                                            kernelMethodName = line.substring(16, c).trim()
+//                                            println "C kernel executing: $kernelMethodName"
+//                                        }
                                         gFileWriter.println "$line"
                                         // copy line directly to groovy output
                                         cFileWriter.println "$line" // copy line to cu file
