@@ -1,7 +1,5 @@
 package gCudaScripts
 
-package gCudaScripts
-
 import gCuda.Dim3
 import jcuda.Pointer
 import jcuda.Sizeof
