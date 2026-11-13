@@ -6,7 +6,7 @@ class InitialScript {
     InitialScript(){
         // this version requires the user to input
         // package name and filename
-        print "Please enter the path for the groovyCuda script to generate: "
+        print "Please enter the FULL path for the groovyCuda script to generate: "
         gCudaScriptPath = System.in.newReader().readLine()
         print "Please enter the name of the groovyCuda script to generate: "
         gCudaScriptName = System.in.newReader().readLine()
@@ -20,7 +20,7 @@ class InitialScript {
 
   /**
    *
-   * @param gCudaSP the path to the directory holding the script file
+   * @param gCudaSP the FULL path to the directory holding the script file
    * @param gCudaSN the name of the script file
    * @param GPUcompute the compute architecture of the GPU being used
    */
@@ -43,6 +43,7 @@ class InitialScript {
   static createScript (String path, String name, String GPUcompute){
         String scriptName
         scriptName = path + name + "Script.groovy"
+        println "Creating $scriptName"
         File scriptFile = new File (scriptName)
         if (scriptFile.exists()) scriptFile.delete()
         PrintWriter sw = scriptFile.newPrintWriter()
@@ -53,7 +54,7 @@ class InitialScript {
         sw.println("import jcuda.driver.*")
         sw.println("import static jcuda.driver.JCudaDriver.*\n")
 
-        sw.println ("//@gcDriverKernel   $path  $name $GPUcompute\n\n" +
+        sw.println ("//@gcDriverKernel $GPUcompute\n\n" +
                 "Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase\n" +
                 "Dim3 blockSize = new Dim3()   \n" +
                 "int sharedMemoryBytes = 0\n" +
@@ -67,19 +68,20 @@ class InitialScript {
 
         sw.println(
                 "//@gcKernelDefinition\n\n" +
-                        "//@gcDataToGPU\n\n" +
-                        "//@gcDataFromGPU\n\n" +
-                        "//@gcDataBoth\n\n" +
-                        "//@gcDataInitialise\n\n" +
-                        "blockSize.x = 32  // modify as required \n"+
-                        "// determine number of blocks in grid, modify following as required\n" +
-                        "gridSize.x = (int)Math.ceil((double) DATASIZE / blockSize.x)\n"+
-                        "//@gcKernelParams \n\n" +
-                        "//@gcKernelEnd\n\n" +
-                        "//@gcEmulate\n\n" +
-                        "blockDim = blockSize\n\n" +
-                        "//@gcFinalise\n\n" +
-                        "//@gcFinish\n\n"
+                "//@gcDataToGPU\n\n" +
+                "//@gcDataFromGPU\n\n" +
+                "//@gcDataBoth\n\n" +
+                "//@gcDataInitialise\n\n" +
+                "blockSize.x = 32  // modify as required \n"+
+                "// determine number of blocks in grid, modify following as required\n" +
+                "gridSize.x = (int)Math.ceil((double) DATASIZE / blockSize.x)\n"+
+                "//@gcKernelInit \n\n" +
+                "//@gcCall methodName ( param, param, ...) \n\n" +
+                "//@gcKernelEnd\n\n" +
+                "//@gcEmulate\n\n" +
+                "blockDim = blockSize\n\n" +
+                "//@gcFinalise\n\n" +
+                "//@gcFinish\n\n"
         )
         sw.flush()
         sw.close()

@@ -1,8 +1,10 @@
 import gCuda.Dim3
 import jcuda.Pointer
+import jcuda.Sizeof
 import jcuda.driver.*
+import static jcuda.driver.JCudaDriver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  FusedMltplyAdd 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()
@@ -57,7 +59,9 @@ gridSize.y = (int)Math.ceil((double) mSize / blockSize.y)
 println " blockSize = $blockSize, gridSize = $gridSize, mSize = $mSize"
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams a,b,c,d,mSize
+//@gcKernelInit
+
+//@gcCall fusedMultiplyAdd(a,b,c,d,mSize)
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()

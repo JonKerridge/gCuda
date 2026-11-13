@@ -1,11 +1,10 @@
-package gCudaScripts
-
 import gCuda.Dim3
 import jcuda.Pointer
 import jcuda.Sizeof
 import jcuda.driver.*
+import static jcuda.driver.JCudaDriver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts  DynamicSharedMemory 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()
@@ -59,7 +58,9 @@ println "Blocksize = ${blockSize.x}, gridsize = ${gridSize.x}"
 
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams d,n
+//@gcKernelInit
+
+//@gcCall  dynamicReverse (d,n)
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()

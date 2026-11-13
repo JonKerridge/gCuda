@@ -4,7 +4,7 @@ import jcuda.Sizeof
 import jcuda.driver.*
 import static jcuda.driver.JCudaDriver.*
 
-//@gcDriverKernel   src/test/groovy/gCudaScripts/  FloatAXPY 61
+//@gcDriverKernel 61
 
 Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase
 Dim3 blockSize = new Dim3()   
@@ -47,7 +47,9 @@ gridSize.x = (int)Math.ceil((double) n / blockSize.x)
 println " blockSize = $blockSize, gridSize = $gridSize, n = $n"
 gpuStart = System.currentTimeMillis()
 
-//@gcKernelParams n,a,x,y
+//@gcKernelInit
+
+//@gcCall faxpy(n,a,x,y)
 
 //@gcKernelEnd
 gpuEnd = System.currentTimeMillis()
