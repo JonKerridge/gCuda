@@ -54,7 +54,7 @@ class InitialScript {
         sw.println("import jcuda.driver.*")
         sw.println("import static jcuda.driver.JCudaDriver.*\n")
 
-        sw.println ("//@gcDriverKernel   $path  $name $GPUcompute\n\n" +
+        sw.println ("//@gcDriverKernel $GPUcompute\n\n" +
                 "Dim3 gridSize = new Dim3()    // must be initialised in the DataInitialise phase\n" +
                 "Dim3 blockSize = new Dim3()   \n" +
                 "int sharedMemoryBytes = 0\n" +

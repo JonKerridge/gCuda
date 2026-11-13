@@ -1,7 +1,5 @@
 package gCuda
 
-import javax.xml.crypto.dsig.keyinfo.KeyInfo
-
 class Build {
   String gcScriptName, gcScriptPath
 
@@ -27,6 +25,10 @@ class Build {
 
   // parsing data structures
   Map <String, List> metaData = [:]
+  //Map with propertyName as key and a list as value comprising
+  // [ propertyId, direction (To, From, Both), type, array or var, declared]
+  // declared will be true once an instance of the property has already been declared
+  // and is now being used in a second or subsequent call
   int propertyId = 0
   List <String> lineTokens
   List<String> script = []
@@ -77,9 +79,9 @@ class Build {
       String propertyType = lineTokens[0].trim()
       String propertyName = lineTokens[1].trim()
       if (propertyType.contains('[]'))
-        metaData.put(propertyName, [propertyId, direction, propertyType - '[]', 'array'])
+        metaData.put(propertyName, [propertyId, direction, propertyType - '[]', 'array', false])
       else
-        metaData.put(propertyName, [propertyId, direction, propertyType, 'var'])
+        metaData.put(propertyName, [propertyId, direction, propertyType, 'var', false])
       propertyId = propertyId + 1
     }
   } // extract data types
@@ -285,16 +287,18 @@ class Build {
    *
    * @param index the index of the //@gcCall specification
    */
-  void extractCall(int index){
+  void extractCall(int index, boolean firstCall){
     String line = script[keyLines[index]]
     line = line - '//@gcCall '
     lineTokens = line.tokenize('(')
     String kernelMethodName = lineTokens[0].trim()
     assert kernelMethodNames.contains(kernelMethodName)
     line = lineTokens[1] - ')'    // the parameters with a trailing )
-    gFileWriter.println "\tCUfunction function = new CUfunction()"
+    if (firstCall)
+      gFileWriter.println "\tCUfunction function = new CUfunction()"
     gFileWriter.println "\tcuModuleGetFunction(function, module, '${kernelMethodName}')"
     lineTokens = line.tokenize(',')
+    println "$lineTokens"
     int nParams = lineTokens.size()
     for ( i in 0 ..< nParams){
       String paramName = lineTokens[i].trim()
@@ -302,42 +306,53 @@ class Build {
       int paramId = (int)metaInf[0]
       String paramDir = metaInf[1]
       String paramType = metaInf[2]
-      if (metaInf[3] == 'var') {
-        // dealing with a variable
-        gFileWriter.println "\t\t${paramType}[] param$paramDir$paramId = new ${paramType}[]{$paramName} "
-      }
-      else{
-        // dealing with an array
+      String arrayOrVar = metaInf[3]
+      boolean declared = metaInf[4]
+      if (arrayOrVar == 'var')
+        if (!declared) {
+        // declare the array structure for the single value and update declared in map
+        // can be reused in subsequent calls
+        gFileWriter.println "\t${paramType}[] param$paramDir$paramId = new ${paramType}[]{$paramName} "
+        metaData.put(paramName, [paramId, paramDir, paramType, 'var', true])
+        }
+        else{} // do nothing
+      else {  // dealing with an array
+        if (!declared){
+          // declare the device pointer for the array and update declared in map
+          gFileWriter.println "\tCUdeviceptr param$paramDir$paramId = new CUdeviceptr()"
+          metaData.put(paramName, [paramId, paramDir, paramType, 'array', true])
+        }
         String paramSize = getSize(paramType)
-        gFileWriter.println "\t\tCUdeviceptr param$paramDir$paramId = new CUdeviceptr()"
-        gFileWriter.println "\t\tcuMemAlloc (param$paramDir$paramId, ${paramName}.size() * $paramSize)"
+        gFileWriter.println "\tcuMemAlloc (param$paramDir$paramId, ${paramName}.size() * $paramSize)"
         if ((paramDir == 'ToGPU') || (paramDir == 'Both') ) // then copy values to GPU for all values sent to GPU
-          gFileWriter.println "\t\tcuMemcpyHtoD (param$paramDir$paramId, Pointer.to($paramName), ${paramName}.size() * $paramSize)"
+          gFileWriter.println "\tcuMemcpyHtoD (param$paramDir$paramId, Pointer.to($paramName), ${paramName}.size() * $paramSize)"
       }
     } // for line tokens
     // now set up the kernel parameters structure
-    gFileWriter.println "\t\tPointer kernelParameters = Pointer.to ("
+    if (firstCall)
+      gFileWriter.println "\tPointer kernelParameters = new Pointer()"
+    gFileWriter.println "\tkernelParameters = Pointer.to ("
     for ( i in 0 ..< nParams) {
       String comma = ','
       if (i == (nParams-1)) comma = ' '
       List mapValues = metaData.get(lineTokens[i].trim())
-      gFileWriter.println "\t\t\tPointer.to( param${mapValues[1]}${mapValues[0]})$comma"
+      gFileWriter.println "\t\tPointer.to( param${mapValues[1]}${mapValues[0]})$comma"
     }
-    gFileWriter.println "\t\t)"
+    gFileWriter.println "\t)"
     // now call the kernel function
-    gFileWriter.println "\t\tcuLaunchKernel ( function,"
-    gFileWriter.println "\t\t\tgridSize.x, gridSize.y, gridSize.z,"
-    gFileWriter.println "\t\t\tblockSize.x, blockSize.y, blockSize.z,"
-    gFileWriter.println "\t\t\tsharedMemoryBytes, hStream,"
-    gFileWriter.println "\t\t\tkernelParameters, extra"
-    gFileWriter.println "\t\t\t)"
-    gFileWriter.println "\t\tcuCtxSynchronize()"
+    gFileWriter.println "\tcuLaunchKernel ( function,"
+    gFileWriter.println "\t\tgridSize.x, gridSize.y, gridSize.z,"
+    gFileWriter.println "\t\tblockSize.x, blockSize.y, blockSize.z,"
+    gFileWriter.println "\t\tsharedMemoryBytes, hStream,"
+    gFileWriter.println "\t\tkernelParameters, extra"
+    gFileWriter.println "\t\t)"
+    gFileWriter.println "\tcuCtxSynchronize()"
     // now copy any data from GPU to host as required
     for ( i in 0 ..< nParams){
       String paramName = lineTokens[i].trim()
       List metaInf = metaData.get(paramName)
       if ( (metaInf[1] == 'FromGPU') || (metaInf[1] == 'Both')){
-        gFileWriter.println "\t\tcuMemcpyDtoH(Pointer.to(${paramName}), " +
+        gFileWriter.println "\tcuMemcpyDtoH(Pointer.to(${paramName}), " +
             "param${metaInf[1]}${metaInf[0]}, ${paramName}.size() * ${getSize((String)metaInf[2])})"
       }
     } // for nParams loop
@@ -453,12 +468,12 @@ class Build {
     copyLines(keyLines[keyIndex] + 1, keyLines[keyIndex + 1])
     assert script[keyLines[keyIndex + 1]].startsWith('//@gcCall')
     keyIndex = keyIndex + 1  // keyIndex is index of first or only //@gcCall
-    extractCall(keyIndex)
+    extractCall(keyIndex, true)
     // now process any subsequent //@gcCall lines
     while (script[keyLines[keyIndex + 1]].startsWith('//@gcCall')){
       copyLines(keyLines[keyIndex] + 1, keyLines[keyIndex + 1])
       keyIndex = keyIndex + 1  // keyIndex is index of a //@gcCall
-      extractCall(keyIndex)
+      extractCall(keyIndex, false)
     }
     assert script[keyLines[keyIndex + 1]].startsWith('//@gcKernelEnd')
     keyIndex = keyIndex + 1 // index of //@gcKernelEnd
